@@ -1,0 +1,21 @@
+<script>
+  App.cable.subscriptions.create({
+    channel: "TweetChannel",
+    source: "<%= params[:source] %>"
+  }, {
+    received: function(data) {
+      console.log(data)
+      return this.appendTweet(data);
+    },
+    appendTweet: function(data) {
+      var html;
+      html = this.createTweet(data);
+      return $("#tweets").append(html);
+    },
+    createTweet: function(data) {
+      return "<span>hello</span>";
+    }
+  })
+</script>
+<h3>Live Tweets of: <%= params[:source] %></h3>
+<div id="tweets"></div>
