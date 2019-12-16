@@ -4,16 +4,17 @@ class TweetChannel < ApplicationCable::Channel
     # we have to downcase the source if the hashtags or usernames are case-sensitive
     stream_from "tweets_#{params[:source]}"
     # saving the number of connection for a same topic
-    current_conncted_user = REDIS_CLIENT.hincrby('conn_count', "#{params[:source]}", 1)
+    @redis ||= RedisClient.new_client
+    current_conncted_user = @redis.hincrby('conn_count', "#{params[:source]}", 1)
     if current_conncted_user == 1
-      # add logic to create new worker for this topic
+      TwitterWorker.start_worker_for(params[:source])
     end
   end
 
   def unsubscribed
-    current_conncted_user = REDIS_CLIENT.hincrby('conn_count', "#{params[:source]}", -1)
+    current_conncted_user = @redis.hincrby('conn_count', "#{params[:source]}", -1)
     if current_conncted_user <= 0
-      # stop worker for this topic
+      TwitterWorker.stop_worker_for(params[:source])
     end
   end
 end
