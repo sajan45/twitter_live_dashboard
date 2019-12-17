@@ -7,6 +7,16 @@ class TwitterController < ApplicationController
     end
   end
 
+  def word_cloud
+    client = TwitterFactory.new_rest_client
+    tweets = client.search("#Byjus")
+    @text_string = ""
+    tweets.each do |tweet|
+      @text_string += tweet.text
+      @text_string += ". "
+    end
+  end
+
   private
 
   # Please note that I used SSE for live streaming on REST API
