@@ -4,7 +4,6 @@
     source: "<%= params[:source] %>"
   }, {
     received: function(data) {
-      console.log(data)
       return this.appendTweet(data);
     },
     appendTweet: function(data) {
@@ -13,7 +12,10 @@
       return $("#tweets").append(html);
     },
     createTweet: function(data) {
-      return "<span>hello</span>";
+      return `<div>
+        <span>${data['text']}</span>
+        <hr>
+      </div`;
     }
   })
 </script>

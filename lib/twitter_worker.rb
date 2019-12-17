@@ -9,7 +9,9 @@ class TwitterWorker
         @stream_client = TwitterFactory.new_streaming_client
         filter_options = {}
         if topic[0] == '@'
-          filter_options[:follow] = topic[1..-1]
+          rest_client = TwitterFactory.new_rest_client
+          user = rest_client.user(topic[1..-1])
+          filter_options[:follow] = user.id
         elsif topic[0] == '#'
           filter_options[:track] = topic # may need to remove '#'
         end
@@ -17,6 +19,9 @@ class TwitterWorker
         @stream_client.filter(filter_options) do |object|
           # Check if stream return is a tweet
           if object.is_a?(Twitter::Tweet)
+            # sending the tweet with all metadata
+            # we may remove not needed attributes to consume less
+            # network bandwidth and for fast transfer
             tweet = object.to_hash
             # Publish tweet to subscribed channel of all users who
             # subscribed to this topic
@@ -26,9 +31,9 @@ class TwitterWorker
             )
           end
         end
-      rescue
+      rescue StandardError => e
         puts "Something went wrong"
-        Thread.exit
+        p e.inspect
       end
     end
     @stream_thread.name = "tweet_topic_#{topic}"
@@ -43,6 +48,6 @@ class TwitterWorker
   end
 
   def self.stop_all_workers
-    Thread.list.each{ |t| t.kill if t.name.start_with("tweet_topic_") }
+    Thread.list.each{ |t| t.kill if t.name && t.name.start_with?("tweet_topic_") }
   end
 end
