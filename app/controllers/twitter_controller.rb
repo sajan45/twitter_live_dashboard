@@ -21,7 +21,7 @@ class TwitterController < ApplicationController
 
   # Please note that I used SSE for live streaming on REST API
   # due to time constraints, but it is not a good approach for for blocking
-  # servers, as every request will block a thread or process causing requese exhausation.
+  # servers, as every request will block a thread or process causing resource exhausation.
   # A better approached would be using some event based servers like the 'eventmachine'
   def stream_tweet
     response.headers['Content-Type'] = 'text/event-stream'
