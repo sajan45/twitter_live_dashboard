@@ -13,7 +13,7 @@ The tech stack:
 ## Starting instructions
 
 * Start a Redis server in localhost `redis-server`
-* Clone the Repo to a local directory `git clone https://github.com/sajan45/twitter_live_dashboard`
+* Clone the Repo to a local directory `git clone https://github.com/sajan45/twitter_live_dashboard`. Please be patient as the repo is heavy due to NLP models.
 * Run `cd twitter-live-dashboard`
 * Run `rails server`
 
@@ -21,6 +21,7 @@ The tech stack:
 * Open **http://localhost:3000/tweets/?source=%40timesofindia** for live stream of tweets of a user (timesofindia in this case)
 * Open **http://localhost:3000/tweets/?source=%23SavdhaanIndia** to live stream tweets on a hashtag
 * Open **http://localhost:3000/word-cloud** for a word-cloud of words from tweets related to Byjus
+* Open **http://localhost:3000/sentiment** for sentiment analysis chart
 
 ## Architecture
 

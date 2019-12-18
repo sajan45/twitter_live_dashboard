@@ -8,13 +8,28 @@ class TwitterController < ApplicationController
   end
 
   def word_cloud
-    client = TwitterFactory.new_rest_client
-    tweets = client.search("#Byjus")
+    tweets = get_tweets_for("#Byjus")
     @text_string = ""
     tweets.each do |tweet|
       @text_string += tweet.text
       @text_string += ". "
     end
+  end
+
+  def sentiment
+    @tweets_str_arr = []
+    tweets = get_tweets_for("#Byjus")
+    tweets.each do |tweet|
+      @tweets_str_arr << tweet.text
+    end
+    @scores = []
+    if @tweets_str_arr.present?
+      @tweets_str_arr.each do |tweet|
+        score = analyse_text(tweet).to_s.to_i
+        @scores << score if score > -1
+      end
+    end
+    @data = generate_data_for_chart(@scores) if @scores.present?
   end
 
   private
@@ -55,5 +70,58 @@ class TwitterController < ApplicationController
       sse.close
     end
     render nothing: true
+  end
+
+  def get_tweets_for(search_term)
+    client = TwitterFactory.new_rest_client
+    client.search(search_term)
+  end
+
+  def analyse_text(str)
+    pipeline = StanfordCoreNLP.load(:tokenize, :ssplit, :parse, :sentiment, :pos, :lemma)
+    text = StanfordCoreNLP::Annotation.new(str)
+    pipeline.annotate(text)
+
+    # 0 = very negative, 1 = negative, 2 = neutral, 3 = positive, and 4 = very positive
+    main_sentiment = -1
+    # we are considering the sentiment of the longest sentence as the main sentiment,
+    # if there are multiple sentences.
+    # this can be tweaked to retun some kind of average sentiment of all sentiments
+    longest = 0
+    text.get(:sentences).each do |sentence|
+      tree = StanfordCoreNLP::AnnotationBridge.getAnnotation(sentence, "edu.stanford.nlp.sentiment.SentimentCoreAnnotations$AnnotatedTree")
+      label = tree._invoke('label')
+      sentiment = StanfordCoreNLP::AnnotationBridge.getAnnotation(label, "edu.stanford.nlp.neural.rnn.RNNCoreAnnotations$PredictedClass")
+      sentence_text = sentence.to_s
+      if sentence_text.length > longest
+        main_sentiment = sentiment
+        longest = sentence_text.length
+      end
+    end
+    main_sentiment
+  end
+
+  def generate_data_for_chart(scores)
+    sentiment_count = Hash.new(0)
+    scores.each do |score|
+      sentiment_count[score] += 1
+    end
+    # keep the order of labels as per the score
+    sentiment_data = [
+      {'label': 'Very Negative', 'percentage': 0},
+      {'label': 'Negative', 'percentage': 0},
+      {'label': 'Neutral', 'percentage': 0},
+      {'label': 'Positive', 'percentage': 0},
+      {'label': 'Very Positive', 'percentage': 0},
+    ]
+    sentiment_count.each do |score, count|
+      if count == 0
+        percent = 0
+      else
+        percent = (count.to_f / scores.length) * 100
+      end
+      sentiment_data[score]["percentage"] = percent.round(2)
+    end
+    sentiment_data
   end
 end
