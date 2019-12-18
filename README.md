@@ -8,7 +8,7 @@ The tech stack:
 * Redis
 * Twitter API
 * ActionCable (for websocket)
-* Services (job queues, cache servers, search engines, etc.)
+* Needs JDK to run the Stanford NLP library (MacOS download link: https://support.apple.com/kb/DL1572?locale=en_US)
 
 ## Starting instructions
 
