@@ -27,6 +27,8 @@ The tech stack:
 
 The project uses Websocket connections to stream tweets to the browser. Every request to /tweets page opens a websocket connection and subscribes the user to a particular topic (either a user or a hashtag). During subscription, the server checks whether there are any other users who are also subscribed to the same topic. If there are no other users subscribed to the same topic, then the Channel starts a **Worker** which runs in s separate **thread** and keeps listening for new tweets on the given topic, using Twitter's stream API.  When there is a new tweet, it broadcasts that to all clients who are subscribed to that topic.
 
-The server uses Server-Sent Events (SSE) for live streaming on REST API. It is not the best approach for a blocking server, as every request will block a thread or process causing resource exhaustion. A better approached would be using some event-based servers like the 'eventmachine' or some other way that works in a non-blocking way.
+The server uses Server-Sent Events (SSE) for live streaming on REST API. Since by nature, SSE uses a blocking connection, I am using 'Rack hijack' API to take-over the connection and server it from a different Thread, so that it won't block the thread of the application server, hence freeing up the resource for other active users.
 
 It uses Redis to store connection count related data.
+
+We are using Stanford NLP for sentiment analysis if tweets. It gives a score between 0 to 4, where 0 = very negative, 1 = negative, 2 = neutral, 3 = positive, and 4 = very positive. While analysis the sentiment, we break the whole text to sentences and consider the sentiment of the longest sentence as the sentiment of the whole text.

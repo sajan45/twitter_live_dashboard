@@ -3,7 +3,13 @@ class TwitterController < ApplicationController
 
   def tweets
     if request.format.json?
-      stream_tweet
+      response.headers["Content-Type"] = "text/event-stream"
+      response.headers["rack.hijack"] = proc do |stream|
+        Thread.new do
+          stream_tweet(stream)
+        end
+      end
+      head :ok
     end
   end
 
@@ -34,13 +40,11 @@ class TwitterController < ApplicationController
 
   private
 
-  # Please note that I used SSE for live streaming on REST API
-  # due to time constraints, but it is not a good approach for for blocking
-  # servers, as every request will block a thread or process causing resource exhausation.
-  # A better approached would be using some event based servers like the 'eventmachine'
-  def stream_tweet
-    response.headers['Content-Type'] = 'text/event-stream'
-    sse = SSE.new(response.stream)
+  # I am using 'Rack hijack' API partially to takeover the connectio and
+  # release the thread used by the application server so that it won't block
+  # the connection for other users
+  def stream_tweet(stream)
+    sse = SSE.new(stream)
     begin
       stream_client = TwitterFactory.new_streaming_client
       topic = params[:source]
@@ -56,20 +60,21 @@ class TwitterController < ApplicationController
         stream_client.filter(filter_options) do |object|
           if object.is_a?(Twitter::Tweet)
             tweet = object.to_hash
-            p tweet
-            sse.write(tweet)
+            sse.write(tweet.to_json)
           end
         end
       else
-        sse.write({error: "No topic"})
+        sse.write({error: "No topic"}.to_json)
       end
     rescue IOError
+    # Client Disconnected
     rescue ClientDisconnected
-      # Client Disconnected
+    # rescuing from the below as it seems rails not raising any of the above
+    # when client disconnects
+    rescue Errno::EPIPE
     ensure
       sse.close
     end
-    render nothing: true
   end
 
   def get_tweets_for(search_term)
