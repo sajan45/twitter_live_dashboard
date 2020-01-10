@@ -13,6 +13,8 @@ The tech stack:
 ## Starting instructions
 
 * Start a Redis server in localhost `redis-server`
+* Install git-lfs from https://git-lfs.github.com/
+* Run `git lfs install` after git-lfs installation.
 * Clone the Repo to a local directory `git clone https://github.com/sajan45/twitter_live_dashboard`. Please be patient as the repo is heavy due to NLP models.
 * Run `cd twitter-live-dashboard`
 * Run `rails server`
